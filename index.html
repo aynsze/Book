@@ -1,0 +1,109 @@
+<!-- /index.html -->
+<!-- Todo:
+・読了の年別デザイン調整
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>読書一覧</title>
+
+    <style>
+        /* =============================
+       全体
+    ============================= */
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        /* =============================
+       ステータスブロック
+    ============================= */
+        .status-block {
+            margin-bottom: 20px;
+        }
+
+        /* sticky見出し */
+        .status-block__header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #F8F9FA;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgb(248, 248, 250);
+            margin: 0 -10px;
+        }
+
+        .status-block__count {
+            color: #5f6368;
+            padding: 1px 2px 2px;
+            border-radius: 4px;
+            background-color: #e8eaed;
+            font-size: 0.8rem;
+            min-width: 14px;
+            text-align: center;
+        }
+
+        /* =============================
+       グリッド（6列）
+    ============================= */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 3px;
+            margin-top: 10px;
+        }
+
+        .book-grid__item img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 2px;
+            object-position: bottom;
+        }
+
+        /* =============================
+       読了（年別）
+    ============================= */
+        .year-block {
+            margin-bottom: 24px;
+        }
+
+        .year-block__header {
+            position: sticky;
+            top: 40px;
+            /* ステータスの下に固定 */
+            background-color: #f1f3f4;
+            padding: 6px 10px;
+            z-index: 5;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="app"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
