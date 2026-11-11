@@ -1,0 +1,193 @@
+<!-- library.html -->
+<!-- bk1 -->
+<!-- 読書一覧（旧index.html） -->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>読書一覧</title>
+
+  <!-- 共通CSS -->
+  <link rel="stylesheet" href="common.css">
+
+  <style>
+    /* ===== 読了（年別） ===== */
+    .year-block {
+      margin-bottom: 24px;
+    }
+
+    .year-block__header {
+      position: sticky;
+      top: 40px;
+      /* ステータスの下に固定 */
+      background-color: #f1f3f4;
+      padding: 6px 10px;
+      z-index: 5;
+
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container" id="app"></div>
+
+  <script type="module">
+
+    // ===== 共通JavaScript読み込み =====
+    import {
+      fetchCSV,
+      sortByAuthorAndTitle,
+      sortByDate,
+      parseDate,
+      createGrid,
+      createCountHeader
+    } from "./common.js";
+
+    // ===== 設定 =====
+    const STATUS_ORDER = ["読みたい", "積読", "読書中", "読了", "中断"];
+
+    // ===== ステータス分類 =====
+    function groupByStatus(data) {
+
+      const map = {};
+
+      STATUS_ORDER.forEach(s => {
+        map[s] = [];
+      });
+
+      data.forEach(item => {
+
+        if (!map[item["ステータス"]]) {
+          map[item["ステータス"]] = [];
+        }
+        map[item["ステータス"]].push(item);
+
+      });
+
+      return map;
+    }
+
+    // ===== 年別分類（読了用） =====
+    function groupByYear(data) {
+
+      const map = {};
+
+      data.forEach(item => {
+
+        if (!item["終了日"]) return;
+
+        const year = parseDate(item["終了日"])?.getFullYear();
+        if (!year) return;
+
+        if (!map[year]) {
+          map[year] = [];
+        }
+
+        map[year].push(item);
+      });
+
+      return Object.keys(map)
+        .sort((a, b) => b - a)
+        .map(year => {
+          const items = sortByDate(map[year]);
+          return {
+            year,
+            items
+          };
+        });
+    }
+
+    // ===== 描画 =====
+    function render(data) {
+
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+
+      const grouped = groupByStatus(data);
+
+      STATUS_ORDER.forEach(status => {
+
+        let items = grouped[status];
+
+        if (!items || items.length === 0) return;
+
+        // 並び替え
+        if (
+          status === "読みたい" ||
+          status === "積読"
+        ) {
+          items = sortByAuthorAndTitle(items);
+        } else if (status === "中断") {
+          items = sortByDate(items);
+        }
+
+        // ステータスブロック
+        const block = document.createElement("div");
+        block.className = "status-block";
+
+        // ステータスヘッダー
+        const header = createCountHeader(status, items.length);
+
+        block.appendChild(header);
+
+        // 読了 → 年別表示
+        if (status === "読了") {
+
+          const years = groupByYear(items);
+
+          years.forEach(y => {
+
+            const yearBlock = document.createElement("div");
+            yearBlock.className = "year-block";
+
+            const yearHeader = createCountHeader(
+              y.year,
+              y.items.length,
+              "year-block__header"
+            );
+            const grid = createGrid(y.items);
+
+            yearBlock.appendChild(yearHeader);
+            yearBlock.appendChild(grid);
+
+            block.appendChild(yearBlock);
+
+          });
+
+        } else {
+          // 読了以外は通常グリッド表示
+          const grid = createGrid(items);
+          block.appendChild(grid);
+        }
+
+        app.appendChild(block);
+
+      });
+    }
+
+    // ===== 初期処理 =====
+    async function init() {
+      try {
+        const data = await fetchCSV();
+        render(data);
+      } catch (error) {
+        console.error("読書データの取得に失敗しました:", error);
+        document.getElementById("app").textContent =
+          "読書データを取得できませんでした。";
+      }
+    }
+
+    init();
+
+  </script>
+</body>
+
+</html>
