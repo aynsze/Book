@@ -15,13 +15,6 @@
     <link rel="stylesheet" href="common.css">
 
     <style>
-        /* ===== 全体 ===== */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 10px;
-        }
-
         /* ===== トグル ===== */
         .toggle {
             display: flex;
@@ -50,41 +43,6 @@
             font-weight: bold;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
         }
-
-        /* ===== ステータスブロック ===== */
-        .status-block {
-            margin-bottom: 20px;
-        }
-
-        /* ===== ステータスヘッダー ===== */
-        .status-block__header {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background-color: #F8F9FA;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid rgb(248, 248, 250);
-            margin: 0 -10px;
-        }
-
-        /* ===== グリッド（6列） ===== */
-        .book-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 3px;
-            margin-top: 10px;
-        }
-
-        .book-grid__item img {
-            width: 100%;
-            display: block;
-            aspect-ratio: 2/3;
-            object-fit: cover;
-            border-radius: 2px;
-        }
     </style>
 </head>
 
@@ -94,7 +52,6 @@
 
         <!-- ===== トグル ===== -->
         <div class="toggle">
-
             <button id="authorButton" class="toggle__button active" type="button">
                 著者別
             </button>
@@ -102,7 +59,6 @@
             <button id="ratingButton" class="toggle__button" type="button">
                 評価別
             </button>
-
         </div>
 
         <!-- ===== 統計表示 ===== -->
@@ -114,7 +70,9 @@
 
         // ===== 共通JavaScript読み込み =====
         import {
-            fetchCSV
+            fetchCSV,
+            createGrid,
+            createCountHeader
         } from "./common.js";
 
         // ===== データ =====
@@ -123,11 +81,9 @@
 
         // ===== 読了データ取得 =====
         function getFinishedBooks() {
-
             return allData.filter(item => {
                 return item["ステータス"] === "読了";
             });
-
         }
 
         // ===== 著者名の正規化 =====
@@ -149,7 +105,6 @@
                 .trim()
 
                 || "著者不明";
-
         }
 
         // ===== 著者別分類 =====
@@ -166,7 +121,6 @@
                 }
 
                 map[author].push(item);
-
             });
 
             // 冊数の多い順
@@ -188,7 +142,6 @@
 
                     // 同数なら著者名順
                     return a.name.localeCompare(b.name, "ja");
-
                 });
         }
 
@@ -215,7 +168,6 @@
                 }
 
                 map[rating].push(item);
-
             });
 
             // ★ 5 → 1 の順番
@@ -227,30 +179,6 @@
                     name: `★ ${rating}`,
                     items: map[rating]
                 }));
-
-        }
-
-        // ===== グリッド生成 =====
-        function createGrid(items) {
-
-            const grid = document.createElement("div");
-            grid.className = "book-grid";
-
-            items.forEach(item => {
-
-                const div = document.createElement("div");
-                div.className = "book-grid__item";
-
-                const img = document.createElement("img");
-                img.src = item["カバーURL"];
-
-                div.appendChild(img);
-
-                grid.appendChild(div);
-
-            });
-
-            return grid;
         }
 
         // ===== ブロック生成 =====
@@ -260,18 +188,10 @@
             block.className = "status-block";
 
             // ヘッダー
-            const header = document.createElement("p");
-            header.className = "status-block__header";
-
-            const name = document.createElement("span");
-            name.textContent = group.name;
-
-            const count = document.createElement("span");
-            count.className = "status-block__count";
-            count.textContent = group.items.length;
-
-            header.appendChild(name);
-            header.appendChild(count);
+            const header = createCountHeader(
+                group.name,
+                group.items.length
+            );
 
             // グリッド
             const grid = createGrid(group.items);
@@ -280,7 +200,6 @@
             block.appendChild(grid);
 
             return block;
-
         }
 
         // ===== 描画 =====
@@ -308,7 +227,6 @@
                 const block = createBlock(group);
                 app.appendChild(block);
             });
-
         }
 
         // ===== トグル切り替え =====
@@ -330,7 +248,6 @@
             );
 
             render();
-
         }
 
         // ===== 初期処理 =====
@@ -362,7 +279,6 @@
                 document.getElementById("app").textContent =
                     "読書データを取得できませんでした。";
             }
-
         }
 
         init();

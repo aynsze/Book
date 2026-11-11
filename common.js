@@ -129,13 +129,6 @@ export function parseDate(date) {
     return result;
 }
 
-// ===== 年の取得 =====
-export function getYear(date) {
-    const parsed = parseDate(date);
-
-    return parsed ? parsed.getFullYear() : null;
-}
-
 // ===== 年月の取得 =====
 export function getYearMonth(date) {
     const parsed = parseDate(date);
@@ -152,7 +145,6 @@ export function getYearMonth(date) {
 // ===== 日付順ソート =====
 // 古い日付 → 新しい日付
 // 日付なしは最後
-
 export function sortByDate(items) {
     return [...items].sort((a, b) => {
         const dateA = parseDate(a.date || a["終了日"]);
@@ -188,4 +180,45 @@ export function sortByAuthorAndTitle(items) {
                 )
         );
     });
+}
+
+// ===== 書影グリッド生成 =====
+export function createGrid(items) {
+
+    const grid = document.createElement("div");
+    grid.className = "book-grid";
+
+    items.forEach(item => {
+
+        const div = document.createElement("div");
+        div.className = "book-grid__item";
+
+        const img = document.createElement("img");
+        img.src = item["カバーURL"];
+
+        div.appendChild(img);
+        grid.appendChild(div);
+
+    });
+
+    return grid;
+}
+
+// ===== 件数付きヘッダー生成 =====
+export function createCountHeader(name, count, className = "status-block__header") {
+
+    const header = document.createElement("p");
+    header.className = className;
+
+    const nameElement = document.createElement("span");
+    nameElement.textContent = name;
+
+    const countElement = document.createElement("span");
+    countElement.className = "status-block__count";
+    countElement.textContent = count;
+
+    header.appendChild(nameElement);
+    header.appendChild(countElement);
+
+    return header;
 }

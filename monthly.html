@@ -87,7 +87,6 @@
         // ===== 共通JavaScript読み込み =====
         import {
             fetchCSV,
-            parseDate,
             getYearMonth,
             sortByDate
         } from "./common.js";
@@ -103,14 +102,13 @@
 
                     data
 
-                        // 満足度ありのみ
-                        .filter(d => d["満足度"])
+                        // 読了のみ
+                        .filter(d => d["ステータス"] === "読了")
 
                         // 終了日から年月を取得
                         .map(d => getYearMonth(d["終了日"]))
 
                         .filter(Boolean)
-
                         .map(d => d.label)
                 )
             ];
@@ -122,7 +120,6 @@
 
                 return by - ay || bm - am;
             });
-
         }
 
         // ===== 月選択プルダウン作成 =====
@@ -140,7 +137,6 @@
             });
 
             select.addEventListener("change", render);
-
         }
 
         // ===== 表示処理 =====
@@ -158,8 +154,8 @@
 
                 allData.filter(d => {
 
-                    // 満足度ありのみ
-                    if (!d["満足度"]) return false;
+                    // 読了のみ
+                    if (d["ステータス"] !== "読了") return false;
 
                     // 終了日から年月を取得
                     const ym = getYearMonth(d["終了日"]);
@@ -167,9 +163,7 @@
                     if (!ym) return false;
 
                     return ym.label === selected;
-
                 })
-
             );
 
             // ===== 冊数表示 =====
@@ -210,11 +204,8 @@
 
                 // データがない場合
                 if (months.length === 0) {
-
                     document.getElementById("count").textContent = "0冊";
-
                     return;
-
                 }
 
                 // プルダウン作成
@@ -225,10 +216,9 @@
 
             } catch (error) {
                 console.error("読書データの取得に失敗しました:", error);
-                document.getElementById("count").textContent = 
-                "取得エラー";
+                document.getElementById("count").textContent =
+                    "取得エラー";
             }
-
         }
 
         init();
