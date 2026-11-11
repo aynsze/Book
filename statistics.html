@@ -1,5 +1,5 @@
 <!-- statistics.html -->
-<!-- bk1 -->
+<!-- bk2 -->
 <!-- 読書の統計（著者別・評価別） -->
 
 <!DOCTYPE html>
@@ -71,7 +71,8 @@
     import {
       fetchCSV,
       createGrid,
-      createCountHeader
+      createCountHeader,
+      sortByDate
     } from "./common.js";
 
     // ===== データ =====
@@ -192,8 +193,11 @@
         group.items.length
       );
 
+      // 終了日が古い順 → 新しい順にソート
+      const sortedItems = sortByDate(group.items);
+
       // グリッド
-      const grid = createGrid(group.items);
+      const grid = createGrid(sortedItems);
 
       block.appendChild(header);
       block.appendChild(grid);
