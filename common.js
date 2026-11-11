@@ -10,90 +10,90 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT3abh6WOEam-G8
 
 // ===== CSV取得 =====
 export async function fetchCSV() {
-    const res = await fetch(CSV_URL);
+  const res = await fetch(CSV_URL);
 
-    if (!res.ok) {
-        throw new Error(`CSV取得エラー: ${res.status}`);
-    }
+  if (!res.ok) {
+    throw new Error(`CSV取得エラー: ${res.status}`);
+  }
 
-    const text = await res.text();
+  const text = await res.text();
 
-    return parseCSV(text);
+  return parseCSV(text);
 }
 
 // ===== CSVパース =====
 export function parseCSV(text) {
-    const rows = [];
+  const rows = [];
 
-    let row = [];
-    let value = "";
-    let inQuotes = false;
+  let row = [];
+  let value = "";
+  let inQuotes = false;
 
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const next = text[i + 1];
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const next = text[i + 1];
 
-        if (char === '"') {
+    if (char === '"') {
 
-            // エスケープされたダブルクォーテーション
-            if (inQuotes && next === '"') {
-                value += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
-            }
+      // エスケープされたダブルクォーテーション
+      if (inQuotes && next === '"') {
+        value += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
 
-        } else if (char === "," && !inQuotes) {
+    } else if (char === "," && !inQuotes) {
 
-            row.push(value);
-            value = "";
+      row.push(value);
+      value = "";
 
-        } else if (
-            (char === "\n" || char === "\r") &&
-            !inQuotes
-        ) {
+    } else if (
+      (char === "\n" || char === "\r") &&
+      !inQuotes
+    ) {
 
-            // CRLFにも対応
-            if (char === "\r" && next === "\n") {
-                i++;
-            }
+      // CRLFにも対応
+      if (char === "\r" && next === "\n") {
+        i++;
+      }
 
-            row.push(value);
-            rows.push(row);
+      row.push(value);
+      rows.push(row);
 
-            row = [];
-            value = "";
+      row = [];
+      value = "";
 
-        } else {
+    } else {
 
-            value += char;
+      value += char;
 
-        }
     }
+  }
 
-    // 最後の行
-    if (value !== "" || row.length > 0) {
-        row.push(value);
-        rows.push(row);
-    }
+  // 最後の行
+  if (value !== "" || row.length > 0) {
+    row.push(value);
+    rows.push(row);
+  }
 
-    if (rows.length === 0) return [];
+  if (rows.length === 0) return [];
 
-    // ヘッダー取得
-    const headers = rows[0].map(h => h.trim());
+  // ヘッダー取得
+  const headers = rows[0].map(h => h.trim());
 
-    // オブジェクト化
-    return rows.slice(1)
-        .filter(r => r.some(v => v.trim() !== ""))
-        .map(r => {
-            const obj = {};
+  // オブジェクト化
+  return rows.slice(1)
+    .filter(r => r.some(v => v.trim() !== ""))
+    .map(r => {
+      const obj = {};
 
-            headers.forEach((header, i) => {
-                obj[header] = (r[i] || "").trim();
-            });
+      headers.forEach((header, i) => {
+        obj[header] = (r[i] || "").trim();
+      });
 
-            return obj;
-        });
+      return obj;
+    });
 }
 
 // ===== 日付処理 =====
@@ -101,124 +101,124 @@ export function parseCSV(text) {
 // YYYY/MM/DD、YYYY-MM-DDに対応
 
 export function parseDate(date) {
-    if (!date) return null;
+  if (!date) return null;
 
-    const normalized = date.trim().replace(/\//g, "-");
+  const normalized = date.trim().replace(/\//g, "-");
 
-    const match = normalized.match(
-        /^(\d{4})-(\d{1,2})-(\d{1,2})$/
-    );
+  const match = normalized.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+  );
 
-    if (!match) return null;
+  if (!match) return null;
 
-    const year = Number(match[1]);
-    const month = Number(match[2]);
-    const day = Number(match[3]);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
 
-    const result = new Date(year, month - 1, day);
+  const result = new Date(year, month - 1, day);
 
-    // 存在しない日付を除外
-    if (
-        result.getFullYear() !== year ||
-        result.getMonth() !== month - 1 ||
-        result.getDate() !== day
-    ) {
-        return null;
-    }
+  // 存在しない日付を除外
+  if (
+    result.getFullYear() !== year ||
+    result.getMonth() !== month - 1 ||
+    result.getDate() !== day
+  ) {
+    return null;
+  }
 
-    return result;
+  return result;
 }
 
 // ===== 年月の取得 =====
 export function getYearMonth(date) {
-    const parsed = parseDate(date);
+  const parsed = parseDate(date);
 
-    if (!parsed) return null;
+  if (!parsed) return null;
 
-    return {
-        year: parsed.getFullYear(),
-        month: parsed.getMonth() + 1,
-        label: `${parsed.getFullYear()}年${parsed.getMonth() + 1}月`
-    };
+  return {
+    year: parsed.getFullYear(),
+    month: parsed.getMonth() + 1,
+    label: `${parsed.getFullYear()}年${parsed.getMonth() + 1}月`
+  };
 }
 
 // ===== 日付順ソート =====
 // 古い日付 → 新しい日付
 // 日付なしは最後
 export function sortByDate(items) {
-    return [...items].sort((a, b) => {
-        const dateA = parseDate(a.date || a["終了日"]);
-        const dateB = parseDate(b.date || b["終了日"]);
+  return [...items].sort((a, b) => {
+    const dateA = parseDate(a.date || a["終了日"]);
+    const dateB = parseDate(b.date || b["終了日"]);
 
-        if (!dateA) return 1;
-        if (!dateB) return -1;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
 
-        return dateA - dateB;
-    });
+    return dateA - dateB;
+  });
 }
 
 // ===== 著者 → タイトル順ソート =====
 export function sortByAuthorAndTitle(items) {
-    return [...items].sort((a, b) => {
+  return [...items].sort((a, b) => {
 
-        const authorCompare =
-            (a.author || a["著者"] || "")
-                .localeCompare(
-                    b.author || b["著者"] || "",
-                    "ja"
-                );
-
-        if (authorCompare !== 0) {
-            return authorCompare;
-        }
-
-        return (
-            (a.title || a["タイトル"] || "")
-                .localeCompare(
-                    b.title || b["タイトル"] || "",
-                    "ja"
-                )
+    const authorCompare =
+      (a.author || a["著者"] || "")
+        .localeCompare(
+          b.author || b["著者"] || "",
+          "ja"
         );
-    });
+
+    if (authorCompare !== 0) {
+      return authorCompare;
+    }
+
+    return (
+      (a.title || a["タイトル"] || "")
+        .localeCompare(
+          b.title || b["タイトル"] || "",
+          "ja"
+        )
+    );
+  });
 }
 
 // ===== 書影グリッド生成 =====
 export function createGrid(items) {
 
-    const grid = document.createElement("div");
-    grid.className = "book-grid";
+  const grid = document.createElement("div");
+  grid.className = "book-grid";
 
-    items.forEach(item => {
+  items.forEach(item => {
 
-        const div = document.createElement("div");
-        div.className = "book-grid__item";
+    const div = document.createElement("div");
+    div.className = "book-grid__item";
 
-        const img = document.createElement("img");
-        img.src = item["カバーURL"];
+    const img = document.createElement("img");
+    img.src = item["カバーURL"];
 
-        div.appendChild(img);
-        grid.appendChild(div);
+    div.appendChild(img);
+    grid.appendChild(div);
 
-    });
+  });
 
-    return grid;
+  return grid;
 }
 
 // ===== 件数付きヘッダー生成 =====
 export function createCountHeader(name, count, className = "status-block__header") {
 
-    const header = document.createElement("p");
-    header.className = className;
+  const header = document.createElement("p");
+  header.className = className;
 
-    const nameElement = document.createElement("span");
-    nameElement.textContent = name;
+  const nameElement = document.createElement("span");
+  nameElement.textContent = name;
 
-    const countElement = document.createElement("span");
-    countElement.className = "status-block__count";
-    countElement.textContent = count;
+  const countElement = document.createElement("span");
+  countElement.className = "status-block__count";
+  countElement.textContent = count;
 
-    header.appendChild(nameElement);
-    header.appendChild(countElement);
+  header.appendChild(nameElement);
+  header.appendChild(countElement);
 
-    return header;
+  return header;
 }

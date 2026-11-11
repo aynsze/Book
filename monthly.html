@@ -6,175 +6,175 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>月別読書一覧</title>
+  <title>月別読書一覧</title>
 
-    <!-- 共通CSS -->
-    <link rel="stylesheet" href="common.css">
+  <!-- 共通CSS -->
+  <link rel="stylesheet" href="common.css">
 
-    <style>
-        /* ===== ヘッダー ===== */
-        .header {
-            display: flex;
-            justify-content: center;
-            padding: 0 16px;
-            margin-bottom: 20px;
-        }
+  <style>
+    /* ===== ヘッダー ===== */
+    .header {
+      display: flex;
+      justify-content: center;
+      padding: 0 16px;
+      margin-bottom: 20px;
+    }
 
-        .header-inner {
-            display: grid;
-            grid-template-columns: 3fr 1.2fr;
-            align-items: center;
-        }
+    .header-inner {
+      display: grid;
+      grid-template-columns: 3fr 1.2fr;
+      align-items: center;
+    }
 
-        /* ===== 月選択 ===== */
-        select {
-            font-size: 40px;
-            padding: 4px 4px 4px 8px;
-        }
+    /* ===== 月選択 ===== */
+    select {
+      font-size: 40px;
+      padding: 4px 4px 4px 8px;
+    }
 
-        /* ===== 冊数 ===== */
-        .count {
-            font-size: 36px;
-            color: #666;
-            text-align: right;
-        }
+    /* ===== 冊数 ===== */
+    .count {
+      font-size: 36px;
+      color: #666;
+      text-align: right;
+    }
 
-        /* ===== グリッド ===== */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
+    /* ===== グリッド ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
 
-        /* ===== カード ===== */
-        .card {
-            text-align: center;
-        }
+    /* ===== カード ===== */
+    .card {
+      text-align: center;
+    }
 
-        /* ===== 表紙 ===== */
-        .cover {
-            width: 100%;
-            aspect-ratio: 2/3;
-            object-fit: cover;
-            border-radius: 6px;
-        }
+    /* ===== 表紙 ===== */
+    .cover {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      border-radius: 6px;
+    }
 
-        /* ===== 満足度 ===== */
-        .rating {
-            font-size: 22px;
-        }
-    </style>
+    /* ===== 満足度 ===== */
+    .rating {
+      font-size: 22px;
+    }
+  </style>
 </head>
 
 <body>
 
-    <!-- ===== ヘッダー ===== -->
-    <div class="header">
-        <div class="header-inner">
-            <select id="monthSelect"></select>
-            <span id="count" class="count"></span>
-        </div>
+  <!-- ===== ヘッダー ===== -->
+  <div class="header">
+    <div class="header-inner">
+      <select id="monthSelect"></select>
+      <span id="count" class="count"></span>
     </div>
+  </div>
 
-    <!-- ===== 読書一覧 ===== -->
-    <div id="grid" class="grid"></div>
+  <!-- ===== 読書一覧 ===== -->
+  <div id="grid" class="grid"></div>
 
-    <script type="module">
+  <script type="module">
 
-        // ===== 共通JavaScript読み込み =====
-        import {
-            fetchCSV,
-            getYearMonth,
-            sortByDate
-        } from "./common.js";
+    // ===== 共通JavaScript読み込み =====
+    import {
+      fetchCSV,
+      getYearMonth,
+      sortByDate
+    } from "./common.js";
 
-        // ===== データ =====
-        let allData = [];
+    // ===== データ =====
+    let allData = [];
 
-        // ===== 月リスト作成 =====
-        function createMonthList(data) {
+    // ===== 月リスト作成 =====
+    function createMonthList(data) {
 
-            const months = [
-                ...new Set(
+      const months = [
+        ...new Set(
 
-                    data
+          data
 
-                        // 読了のみ
-                        .filter(d => d["ステータス"] === "読了")
+            // 読了のみ
+            .filter(d => d["ステータス"] === "読了")
 
-                        // 終了日から年月を取得
-                        .map(d => getYearMonth(d["終了日"]))
+            // 終了日から年月を取得
+            .map(d => getYearMonth(d["終了日"]))
 
-                        .filter(Boolean)
-                        .map(d => d.label)
-                )
-            ];
+            .filter(Boolean)
+            .map(d => d.label)
+        )
+      ];
 
-            // 新しい月を上にする
-            return months.sort((a, b) => {
-                const [ay, am] = a.match(/\d+/g).map(Number);
-                const [by, bm] = b.match(/\d+/g).map(Number);
+      // 新しい月を上にする
+      return months.sort((a, b) => {
+        const [ay, am] = a.match(/\d+/g).map(Number);
+        const [by, bm] = b.match(/\d+/g).map(Number);
 
-                return by - ay || bm - am;
-            });
-        }
+        return by - ay || bm - am;
+      });
+    }
 
-        // ===== 月選択プルダウン作成 =====
-        function createMonthSelect(months) {
+    // ===== 月選択プルダウン作成 =====
+    function createMonthSelect(months) {
 
-            const select = document.getElementById("monthSelect");
-            select.innerHTML = "";
+      const select = document.getElementById("monthSelect");
+      select.innerHTML = "";
 
-            months.forEach(month => {
-                const option = document.createElement("option");
-                option.value = month;
-                option.textContent = month;
+      months.forEach(month => {
+        const option = document.createElement("option");
+        option.value = month;
+        option.textContent = month;
 
-                select.appendChild(option);
-            });
+        select.appendChild(option);
+      });
 
-            select.addEventListener("change", render);
-        }
+      select.addEventListener("change", render);
+    }
 
-        // ===== 表示処理 =====
-        function render() {
+    // ===== 表示処理 =====
+    function render() {
 
-            const selected = document.getElementById("monthSelect").value;
-            const grid = document.getElementById("grid");
-            const count = document.getElementById("count");
+      const selected = document.getElementById("monthSelect").value;
+      const grid = document.getElementById("grid");
+      const count = document.getElementById("count");
 
-            // グリッド初期化
-            grid.innerHTML = "";
+      // グリッド初期化
+      grid.innerHTML = "";
 
-            // ===== 月別抽出 =====
-            const filtered = sortByDate(
+      // ===== 月別抽出 =====
+      const filtered = sortByDate(
 
-                allData.filter(d => {
+        allData.filter(d => {
 
-                    // 読了のみ
-                    if (d["ステータス"] !== "読了") return false;
+          // 読了のみ
+          if (d["ステータス"] !== "読了") return false;
 
-                    // 終了日から年月を取得
-                    const ym = getYearMonth(d["終了日"]);
+          // 終了日から年月を取得
+          const ym = getYearMonth(d["終了日"]);
 
-                    if (!ym) return false;
+          if (!ym) return false;
 
-                    return ym.label === selected;
-                })
-            );
+          return ym.label === selected;
+        })
+      );
 
-            // ===== 冊数表示 =====
-            count.textContent = filtered.length + "冊";
+      // ===== 冊数表示 =====
+      count.textContent = filtered.length + "冊";
 
-            // ===== カード生成 =====
-            filtered.forEach(d => {
+      // ===== カード生成 =====
+      filtered.forEach(d => {
 
-                const div = document.createElement("div");
-                div.className = "card";
-                div.innerHTML = `
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
                     <img
                         class="cover"
                         src="${d["カバーURL"]}"
@@ -185,45 +185,45 @@
                     </div>
                 `;
 
-                grid.appendChild(div);
+        grid.appendChild(div);
 
-            });
+      });
 
+    }
+
+    // ===== 初期処理 =====
+    async function init() {
+
+      try {
+
+        // CSV取得
+        allData = await fetchCSV();
+
+        // 月リスト作成
+        const months = createMonthList(allData);
+
+        // データがない場合
+        if (months.length === 0) {
+          document.getElementById("count").textContent = "0冊";
+          return;
         }
 
-        // ===== 初期処理 =====
-        async function init() {
+        // プルダウン作成
+        createMonthSelect(months);
 
-            try {
+        // 初回表示
+        render();
 
-                // CSV取得
-                allData = await fetchCSV();
+      } catch (error) {
+        console.error("読書データの取得に失敗しました:", error);
+        document.getElementById("count").textContent =
+          "取得エラー";
+      }
+    }
 
-                // 月リスト作成
-                const months = createMonthList(allData);
+    init();
 
-                // データがない場合
-                if (months.length === 0) {
-                    document.getElementById("count").textContent = "0冊";
-                    return;
-                }
-
-                // プルダウン作成
-                createMonthSelect(months);
-
-                // 初回表示
-                render();
-
-            } catch (error) {
-                console.error("読書データの取得に失敗しました:", error);
-                document.getElementById("count").textContent =
-                    "取得エラー";
-            }
-        }
-
-        init();
-
-    </script>
+  </script>
 </body>
 
 </html>
