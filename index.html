@@ -1,0 +1,58 @@
+<!-- index.html -->
+<!-- bk1 -->
+<!-- 各ページへの入口ページ -->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>読書管理</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .menu {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 20px;
+    }
+
+    .menu a {
+      flex: 1;
+      height: 70vh;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #F8F9FA;
+      color: #5F6368;
+      font-size: 1.2rem;
+      /* text-decoration: none; */
+    }
+
+    .menu a:active,
+    .menu a:hover {
+      background: #E8EAED;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="menu">
+    <a href="monthly.html">月別</a>
+    <a href="library.html">読書一覧</a>
+    <a href="statistics.html">統計</a>
+  </nav>
+
+</body>
+
+</html>
