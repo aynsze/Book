@@ -1,9 +1,13 @@
+<!-- monthly.html -->
+<!-- bk1 -->
+<!-- 月別読書一覧 -->
+
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
     <meta charset="UTF-8">
-    <title>BooksBoardMonthly</title>
+    <title>月別読書一覧</title>
 
     <style>
         body {
@@ -76,9 +80,7 @@
 
         let allData = [];
 
-        // =============================
-        // 初期処理
-        // =============================
+        // ===== 初期処理 =====
         async function init() {
             const res = await fetch(CSV_URL);
             const text = await res.text();
@@ -127,9 +129,7 @@
             render();
         }
 
-        // =============================
-        // 表示処理
-        // =============================
+        // ===== 表示処理 =====
         function render() {
             const selected = document.getElementById("monthSelect").value;
             const grid = document.getElementById("grid");
