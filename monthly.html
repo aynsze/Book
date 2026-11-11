@@ -1,5 +1,5 @@
 <!-- monthly.html -->
-<!-- bk1 -->
+<!-- bk2 -->
 <!-- 月別読書一覧 -->
 
 <!DOCTYPE html>
@@ -7,15 +7,15 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>月別読書一覧</title>
 
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 16px;
-            margin: 0;
-        }
+    <!-- 共通CSS -->
+    <link rel="stylesheet" href="common.css">
 
+    <style>
+        /* ===== ヘッダー ===== */
         .header {
             display: flex;
             justify-content: center;
@@ -26,31 +26,35 @@
         .header-inner {
             display: grid;
             grid-template-columns: 3fr 1.2fr;
-            /* ←ここがポイント */
             align-items: center;
         }
 
+        /* ===== 月選択 ===== */
         select {
             font-size: 40px;
             padding: 4px 4px 4px 8px;
         }
 
+        /* ===== 冊数 ===== */
         .count {
             font-size: 36px;
             color: #666;
             text-align: right;
         }
 
+        /* ===== グリッド ===== */
         .grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
         }
 
+        /* ===== カード ===== */
         .card {
             text-align: center;
         }
 
+        /* ===== 表紙 ===== */
         .cover {
             width: 100%;
             aspect-ratio: 2/3;
@@ -58,6 +62,7 @@
             border-radius: 6px;
         }
 
+        /* ===== 満足度 ===== */
         .rating {
             font-size: 22px;
         }
@@ -66,6 +71,7 @@
 
 <body>
 
+    <!-- ===== ヘッダー ===== -->
     <div class="header">
         <div class="header-inner">
             <select id="monthSelect"></select>
@@ -73,98 +79,160 @@
         </div>
     </div>
 
+    <!-- ===== 読書一覧 ===== -->
     <div id="grid" class="grid"></div>
 
-    <script>
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT3abh6WOEam-G81jfG6h_k6QhQKIjYaJP5e3vIRZkYLUbOS5Vgb3VZsFBBSeYl6sW6l9tBtDr1XzZz/pub?gid=1531015479&single=true&output=csv"; // ←後で差し替え
+    <script type="module">
 
+        // ===== 共通JavaScript読み込み =====
+        import {
+            fetchCSV,
+            parseDate,
+            getYearMonth,
+            sortByDate
+        } from "./common.js";
+
+        // ===== データ =====
         let allData = [];
 
-        // ===== 初期処理 =====
-        async function init() {
-            const res = await fetch(CSV_URL);
-            const text = await res.text();
+        // ===== 月リスト作成 =====
+        function createMonthList(data) {
 
-            const rows = text.trim().split("\n").map(r => r.split(","));
+            const months = [
+                ...new Set(
 
-            const headers = rows[0];
-            const data = rows.slice(1);
+                    data
 
-            // オブジェクト化
-            allData = data.map(r => {
-                let obj = {};
-                headers.forEach((h, i) => {
-                    const key = h.trim();
-                    const value = r[i] ? r[i].trim() : "";
-                    obj[key] = value;
-                });
-                return obj;
-            });
+                        // 満足度ありのみ
+                        .filter(d => d["満足度"])
 
-            // 月リスト作成（満足度ありのみ）
-            const months = [...new Set(
-                allData
-                    .filter(d => d["満足度"]) // ★ここ追加
-                    .map(d => {
-                        const date = new Date(d["終了日"]);
-                        return `${date.getFullYear()}年${date.getMonth() + 1}月`;
-                    })
-            )].sort((a, b) => {
+                        // 終了日から年月を取得
+                        .map(d => getYearMonth(d["終了日"]))
+
+                        .filter(Boolean)
+
+                        .map(d => d.label)
+                )
+            ];
+
+            // 新しい月を上にする
+            return months.sort((a, b) => {
                 const [ay, am] = a.match(/\d+/g).map(Number);
                 const [by, bm] = b.match(/\d+/g).map(Number);
+
                 return by - ay || bm - am;
             });
 
-            const select = document.getElementById("monthSelect");
+        }
 
-            months.forEach(m => {
+        // ===== 月選択プルダウン作成 =====
+        function createMonthSelect(months) {
+
+            const select = document.getElementById("monthSelect");
+            select.innerHTML = "";
+
+            months.forEach(month => {
                 const option = document.createElement("option");
-                option.value = m;
-                option.textContent = m;
+                option.value = month;
+                option.textContent = month;
+
                 select.appendChild(option);
             });
 
             select.addEventListener("change", render);
 
-            render();
         }
 
         // ===== 表示処理 =====
         function render() {
+
             const selected = document.getElementById("monthSelect").value;
             const grid = document.getElementById("grid");
             const count = document.getElementById("count");
 
+            // グリッド初期化
             grid.innerHTML = "";
 
-            const filtered = allData
-                .filter(d => {
-                    // ★ 満足度ありのみ
+            // ===== 月別抽出 =====
+            const filtered = sortByDate(
+
+                allData.filter(d => {
+
+                    // 満足度ありのみ
                     if (!d["満足度"]) return false;
 
-                    const date = new Date(d["終了日"]);
-                    const ym = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+                    // 終了日から年月を取得
+                    const ym = getYearMonth(d["終了日"]);
 
-                    return ym === selected;
+                    if (!ym) return false;
+
+                    return ym.label === selected;
+
                 })
-                .sort((a, b) => new Date(a["終了日"]) - new Date(b["終了日"]));
 
+            );
+
+            // ===== 冊数表示 =====
             count.textContent = filtered.length + "冊";
 
+            // ===== カード生成 =====
             filtered.forEach(d => {
+
                 const div = document.createElement("div");
                 div.className = "card";
-
                 div.innerHTML = `
-            <img class="cover" src="${d["カバーURL"]}" alt="${d["タイトル"]}" title="${d["タイトル"]}">
-            <div class="rating">★ ${d["満足度"]}</div>
-        `;
+                    <img
+                        class="cover"
+                        src="${d["カバーURL"]}"
+                    >
+
+                    <div class="rating">
+                        ★ ${d["満足度"]}
+                    </div>
+                `;
 
                 grid.appendChild(div);
+
             });
+
+        }
+
+        // ===== 初期処理 =====
+        async function init() {
+
+            try {
+
+                // CSV取得
+                allData = await fetchCSV();
+
+                // 月リスト作成
+                const months = createMonthList(allData);
+
+                // データがない場合
+                if (months.length === 0) {
+
+                    document.getElementById("count").textContent = "0冊";
+
+                    return;
+
+                }
+
+                // プルダウン作成
+                createMonthSelect(months);
+
+                // 初回表示
+                render();
+
+            } catch (error) {
+                console.error("読書データの取得に失敗しました:", error);
+                document.getElementById("count").textContent = 
+                "取得エラー";
+            }
+
         }
 
         init();
+
     </script>
 </body>
 

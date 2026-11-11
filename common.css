@@ -1,0 +1,51 @@
+/* common.css */
+/* bk1 */
+/* ページ共通CSS */
+
+/* ===== 全体 ===== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    user-select: none;
+}
+
+/* ===== 共通カラー ===== */
+:root {
+    --color-background: #F8F9FA;
+    --color-surface: #FFFFFF;
+    --color-header: #F1F3F4;
+    --color-text: #202124;
+    --color-text-sub: #5F6368;
+    --color-count-bg: #E8EAED;
+    --color-border: #E8EAED;
+}
+
+/* ===== 共通カウント表示 ===== */
+.status-block__count {
+    color: var(--color-text-sub);
+    padding: 1px 2px 2px;
+    border-radius: 4px;
+    background-color: var(--color-count-bg);
+    font-size: 0.8rem;
+    min-width: 14px;
+    text-align: center;
+}
+
+/* ===== 共通書影 ===== */
+.cover {
+    width: 100%;
+    display: block;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+/* ===== 共通リンク ===== */
+a {
+    color: inherit;
+    text-decoration: none;
+}
