@@ -1,0 +1,374 @@
+<!-- statistics.html -->
+<!-- bk1 -->
+<!-- 読書統計 -->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>読書統計</title>
+
+    <!-- 共通CSS -->
+    <link rel="stylesheet" href="common.css">
+
+    <style>
+        /* ===== 全体 ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        /* ===== トグル ===== */
+        .toggle {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            padding: 4px;
+            background-color: #e8eaed;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .toggle__button {
+            border: none;
+            background: transparent;
+            color: #5f6368;
+            font-size: 15px;
+            padding: 8px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .toggle__button.active {
+            background-color: #ffffff;
+            color: #202124;
+            font-weight: bold;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ===== ステータスブロック ===== */
+        .status-block {
+            margin-bottom: 20px;
+        }
+
+        /* ===== ステータスヘッダー ===== */
+        .status-block__header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #F8F9FA;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgb(248, 248, 250);
+            margin: 0 -10px;
+        }
+
+        /* ===== グリッド（6列） ===== */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 3px;
+            margin-top: 10px;
+        }
+
+        .book-grid__item img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ===== トグル ===== -->
+        <div class="toggle">
+
+            <button id="authorButton" class="toggle__button active" type="button">
+                著者別
+            </button>
+
+            <button id="ratingButton" class="toggle__button" type="button">
+                評価別
+            </button>
+
+        </div>
+
+        <!-- ===== 統計表示 ===== -->
+        <div id="app"></div>
+
+    </div>
+
+    <script type="module">
+
+        // ===== 共通JavaScript読み込み =====
+        import {
+            fetchCSV
+        } from "./common.js";
+
+        // ===== データ =====
+        let allData = [];
+        let currentMode = "author";
+
+        // ===== 読了データ取得 =====
+        function getFinishedBooks() {
+
+            return allData.filter(item => {
+                return item["ステータス"] === "読了";
+            });
+
+        }
+
+        // ===== 著者名の正規化 =====
+        function normalizeAuthor(author) {
+
+            if (!author) {
+                return "著者不明";
+            }
+
+            return author
+
+                // スラッシュ以降を削除
+                .split(/[\/／]/)[0]
+
+                // 半角・全角などの空白を削除
+                .replace(/\s+/g, "")
+
+                // 前後の空白を削除
+                .trim()
+
+                || "著者不明";
+
+        }
+
+        // ===== 著者別分類 =====
+        function groupByAuthor(data) {
+
+            const map = {};
+
+            data.forEach(item => {
+
+                const author = normalizeAuthor(item["著者"]);
+
+                if (!map[author]) {
+                    map[author] = [];
+                }
+
+                map[author].push(item);
+
+            });
+
+            // 冊数の多い順
+            return Object.entries(map)
+
+                .map(([author, items]) => ({
+                    name: author,
+                    items: items
+                }))
+
+                .sort((a, b) => {
+
+                    // 冊数の多い順
+                    const countDiff = b.items.length - a.items.length;
+
+                    if (countDiff !== 0) {
+                        return countDiff;
+                    }
+
+                    // 同数なら著者名順
+                    return a.name.localeCompare(b.name, "ja");
+
+                });
+        }
+
+        // ===== 評価別分類 =====
+        function groupByRating(data) {
+
+            const map = {};
+
+            data.forEach(item => {
+
+                const rating = Number(item["満足度"]);
+
+                // 評価なし・不正な評価は除外
+                if (
+                    !Number.isFinite(rating) ||
+                    rating < 1 ||
+                    rating > 5
+                ) {
+                    return;
+                }
+
+                if (!map[rating]) {
+                    map[rating] = [];
+                }
+
+                map[rating].push(item);
+
+            });
+
+            // ★ 5 → 1 の順番
+            return Object.keys(map)
+
+                .sort((a, b) => Number(b) - Number(a))
+
+                .map(rating => ({
+                    name: `★ ${rating}`,
+                    items: map[rating]
+                }));
+
+        }
+
+        // ===== グリッド生成 =====
+        function createGrid(items) {
+
+            const grid = document.createElement("div");
+            grid.className = "book-grid";
+
+            items.forEach(item => {
+
+                const div = document.createElement("div");
+                div.className = "book-grid__item";
+
+                const img = document.createElement("img");
+                img.src = item["カバーURL"];
+
+                div.appendChild(img);
+
+                grid.appendChild(div);
+
+            });
+
+            return grid;
+        }
+
+        // ===== ブロック生成 =====
+        function createBlock(group) {
+
+            const block = document.createElement("div");
+            block.className = "status-block";
+
+            // ヘッダー
+            const header = document.createElement("p");
+            header.className = "status-block__header";
+
+            const name = document.createElement("span");
+            name.textContent = group.name;
+
+            const count = document.createElement("span");
+            count.className = "status-block__count";
+            count.textContent = group.items.length;
+
+            header.appendChild(name);
+            header.appendChild(count);
+
+            // グリッド
+            const grid = createGrid(group.items);
+
+            block.appendChild(header);
+            block.appendChild(grid);
+
+            return block;
+
+        }
+
+        // ===== 描画 =====
+        function render() {
+
+            const app = document.getElementById("app");
+            app.innerHTML = "";
+
+            // 読了データのみ取得
+            const finishedBooks = getFinishedBooks();
+
+            // 著者別
+            let groups;
+
+            if (currentMode === "author") {
+                groups = groupByAuthor(finishedBooks);
+            } else {
+                // 評価別
+                groups = groupByRating(finishedBooks);
+
+            }
+
+            // ブロック表示
+            groups.forEach(group => {
+                const block = createBlock(group);
+                app.appendChild(block);
+            });
+
+        }
+
+        // ===== トグル切り替え =====
+        function changeMode(mode) {
+
+            currentMode = mode;
+
+            const authorButton = document.getElementById("authorButton");
+            const ratingButton = document.getElementById("ratingButton");
+
+            authorButton.classList.toggle(
+                "active",
+                mode === "author"
+            );
+
+            ratingButton.classList.toggle(
+                "active",
+                mode === "rating"
+            );
+
+            render();
+
+        }
+
+        // ===== 初期処理 =====
+        async function init() {
+
+            try {
+
+                // CSV取得
+                allData = await fetchCSV();
+
+                // トグルイベント
+                document.getElementById("authorButton").addEventListener("click", () => {
+                    changeMode("author");
+                });
+
+                document.getElementById("ratingButton").addEventListener("click", () => {
+                    changeMode("rating");
+                });
+
+                // 初期表示（著者別）
+                render();
+
+            } catch (error) {
+                console.error(
+                    "読書データの取得に失敗しました:",
+                    error
+                );
+
+                document.getElementById("app").textContent =
+                    "読書データを取得できませんでした。";
+            }
+
+        }
+
+        init();
+
+    </script>
+
+</body>
+
+</html>
